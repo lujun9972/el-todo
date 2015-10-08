@@ -122,10 +122,13 @@
 (defcustom todo-save-file (concat default-directory "todo-file.save")
   "the file used to save tasks")
 
+(cl-defun todo--find-undone-tasks (tasks)
+  (remove-if #'task-done-time tasks))
+
 (cl-defun todo-save (&optional (save-file todo-save-file))
   "save todo tasks"
   (with-temp-file save-file
-	(insert (prin1-to-string *todo-tasks*))))
+	(insert (prin1-to-string (todo--find-undone-tasks *todo-tasks*)))))
 
 ;; todo load
 (cl-defun todo-load (&optional (save-file todo-save-file))
