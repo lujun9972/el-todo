@@ -122,16 +122,16 @@
 (defcustom todo-save-file (concat default-directory "todo-file.save")
   "the file used to save tasks")
 
-(cl-defun todo-save ()
+(cl-defun todo-save (&optional (save-file todo-save-file))
   "save todo tasks"
-  (with-temp-file todo-save-file
+  (with-temp-file save-file
 	(insert (prin1-to-string *todo-tasks*))))
 
 ;; todo load
-(cl-defun todo-load ()
+(cl-defun todo-load (&optional (save-file todo-save-file))
   "load todo tasks"
   (with-temp-buffer
-	(insert-file-contents todo-save-file)
+	(insert-file-contents save-file)
 	(setq *todo-tasks* (read-from-whole-string (buffer-string)))))
 
 ;; todo pull server user pwd
