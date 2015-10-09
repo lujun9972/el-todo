@@ -147,5 +147,57 @@
 	(setq *todo-tasks* (read-from-whole-string (buffer-string)))))
 
 ;; todo pull server user pwd
+(defvar todo-client--process nil)
+
+(defcustom todo-server "127.0.0.1"
+  "the address of todo server")
+
+(defcustom todo-port 7000
+  "the port of todo server")
+
+(cl-defun todo--connect-to-server (server port)
+  "make a process connect to the todo server"
+  (make-lispy-network-process :name "todo-client"
+							  :host server
+							  :service port
+							  :filter (lambda (proc &rest objs)
+										(let* ((cmd (car objs))
+											   (cmd-fn (intern (format "todo--%s" cmd)))
+											   (args (cdr objs)))
+										  (when (eq (process-get proc 'WAIT) cmd)
+											(process-put proc 'WAIT nil))
+										  (apply cmd-fn proc args)))))
+
+(cl-defun todo-pull (&optional (server todo-server) (port todo-port) user pwd)
+  (let ((user (or user
+				  (read-string "please input the user name: " user-login-name)))
+		(pwd (md5 (or pwd
+					  (read-string "please input the password: ")))))
+	(unless (and todo-client--process
+				 (process-live-p todo-client--process))
+	  (setq todo-client--process
+			(todo--connect-to-server server port)))
+	(lispy-process-send-wait todo-client--process 'PULL-RESPONSE
+							 'PULL user pwd)))
+(cl-defun todo--PULL-RESPONSE (conn status tasks-or-error)
+  ""
+  (if status
+	  (setq *todo-tasks* tasks-or-error)
+	(error tasks-or-error)))
 
 ;; todo push server
+(cl-defun todo-push (&optional (server todo-server) (port todo-port) user pwd)
+  (let ((user (or user
+				  (read-string "please input the user name: " user-login-name)))
+		(pwd (md5 (or pwd
+					  (read-string "please input the password: ")))))
+	(unless (and todo-client--process
+				 (process-live-p todo-client--process))
+	  (setq todo-client--process
+			(todo--connect-to-server server port)))
+	(lispy-process-send-wait todo-client--process 'PUSH-RESPONSE
+							 'PUSH user pwd *todo-tasks*)))
+(cl-defun todo--PUSH-RESPONSE (conn status &optional tasks-or-error)
+  ""
+  (unless status
+	(error tasks-or-error)))
