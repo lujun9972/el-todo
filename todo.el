@@ -86,10 +86,13 @@
 		   (task-pri task)
 		   (task-tags task)))
 
+(cl-defun todo--show-tasks (tasks)
+  (string-join (mapcar #'todo--show-task tasks) "\n"))
+
 (cl-defun todo-show (&key desc pri tag (done nil done-p))
   "filter and list tasks"
   (let ((tasks (todo--filter :desc desc :pri pri :tag tag :done done-p)))
-	(string-join (mapcar #'todo--show-task tasks) "\n")))
+	(todo--show-tasks tasks)))
 
 ;; todo edit task-id task-description
 (cl-defun todo--find-task-by-id (id)
