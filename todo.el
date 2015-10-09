@@ -1,7 +1,7 @@
 (require 'cl)
 (require 'subr-x)
 
-(defgroup el-todo nil
+(defgroup esh-todo nil
   "a todo command line tool used in eshell")
 
 (defvar *todo-tasks* nil
