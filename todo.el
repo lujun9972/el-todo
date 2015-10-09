@@ -49,10 +49,19 @@
 				   :deadline-time dl) *todo-tasks*))
 
 ;; todo show
-(cl-defun todo--filter (&key id desc pri tag)
-  "filter and list tasks"
+(cl-defun todo--find-undone-tasks (tasks)
+  (remove-if #'task-done-time tasks))
+
+(cl-defun todo--filter (&key id desc pri tag done)
+  "filter and list tasks
+`:done'表示同时显示已完成的任务
+`:desc'参数表示只显示符合所指定正则的任务"
   (let ((tasks *todo-tasks*))
+	(unless done
+	  (setq tasks (todo--find-undone-tasks tasks)))
 	(when id
+	  (when (stringp id)
+		(setq id (intern id)))
 	  (setq tasks (remove-if-not (lambda (task)
 								   (eq id (task-id task)))
 								 tasks)))
@@ -77,9 +86,9 @@
 		   (task-pri task)
 		   (task-tags task)))
 
-(cl-defun todo-show (&key desc pri tag)
+(cl-defun todo-show (&key desc pri tag (done nil done-p))
   "filter and list tasks"
-  (let ((tasks (todo--filter :desc desc :pri pri :tag tag)))
+  (let ((tasks (todo--filter :desc desc :pri pri :tag tag :done done-p)))
 	(string-join (mapcar #'todo--show-task tasks) "\n")))
 
 ;; todo edit task-id task-description
@@ -91,7 +100,7 @@
 	task))
 
 (defmacro todo--with-task (id &rest body)
-  (declare (indent 2))
+  (declare (indent 2) (debug t))
   `(let ((THE-TASK (todo--find-task-by-id ,id)))
 	,@body))
 
@@ -122,13 +131,10 @@
 (defcustom todo-save-file (concat default-directory "todo-file.save")
   "the file used to save tasks")
 
-(cl-defun todo--find-undone-tasks (tasks)
-  (remove-if #'task-done-time tasks))
-
 (cl-defun todo-save (&optional (save-file todo-save-file))
   "save todo tasks"
   (with-temp-file save-file
-	(insert (prin1-to-string (todo--find-undone-tasks *todo-tasks*)))))
+	(insert (prin1-to-string *todo-tasks*))))
 
 ;; todo load
 (cl-defun todo-load (&optional (save-file todo-save-file))
