@@ -81,11 +81,19 @@
 	tasks))
 
 (cl-defun todo--show-task (task)
-   (message "%s: %s :pri %s :done %s"
-		   (task-id task)
-		   (task-desc task)
-		   (task-pri task)
-		   (task-done-time task)))
+  (let ((task-info (format "%s:%s\t" (task-id task) (task-desc task)))
+		(pri-info (and (task-pri task)
+					   (format "优先级:%s" (task-pri task))))
+		(done-info (and (task-done-time task)
+						(format  "完成时间:%s" (task-done-time task))))
+		(sd-info (and (task-schedule-time task)
+					  (format "规划时间:%s" (task-schedule-time task))))
+		(dl-info (and (task-deadline-time task)
+					  (format "截止时间:%s" (task-deadline-time task)))))
+	(dolist (element-info (list pri-info done-info sd-info dl-info))
+	  (when element-info
+		(setq task-info (concat task-info " " element-info))))
+	(message task-info)))
 
 (cl-defun todo--show-tasks (tasks)
   (string-join (mapcar #'todo--show-task tasks) "\n"))
