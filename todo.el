@@ -119,6 +119,18 @@
   (todo--with-task id
 	  (setf (task-pri THE-TASK) pri)))
 
+;; todo sd task-id 
+(cl-defun todo-sd (task-id)
+  "set/change task's schedule date"
+  (todo--with-task id
+	  (setf (task-schedule-time THE-TASK) (org-read-date))))
+
+;; todo dl task-id 
+(cl-defun todo-dl (task-id)
+  "set/change task's schedule date"
+  (todo--with-task id
+	  (setf (task-deadline-time THE-TASK) (org-read-date))))
+
 ;; todo done task-id
 (cl-defun todo-done (id)
   "mark a task done,and remember the finish time"
