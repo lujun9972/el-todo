@@ -50,6 +50,7 @@
 
 ;; todo show
 (cl-defun todo--find-undone-tasks (tasks)
+  "find only unfinished tasks"
   (remove-if #'task-done-time tasks))
 
 (cl-defun todo--filter (&key id desc pri tag done)
@@ -80,11 +81,11 @@
 	tasks))
 
 (cl-defun todo--show-task (task)
-   (message "%s: %s :pri %s :tags %s"
+   (message "%s: %s :pri %s :done %s"
 		   (task-id task)
 		   (task-desc task)
 		   (task-pri task)
-		   (task-tags task)))
+		   (task-done-time task)))
 
 (cl-defun todo--show-tasks (tasks)
   (string-join (mapcar #'todo--show-task tasks) "\n"))
@@ -112,6 +113,12 @@
   (todo--with-task id
 	(setf (task-desc THE-TASK) desc)))
 
+;; todo pri task-id new-pri
+(cl-defun todo-pri (task-id pri)
+  "set/change task's priority"
+  (todo--with-task id
+	  (setf (task-pri THE-TASK) pri)))
+
 ;; todo done task-id
 (cl-defun todo-done (id)
   "mark a task done,and remember the finish time"
@@ -126,7 +133,7 @@
 
 ;; todo pause task-id
 (cl-defun todo-pause (id)
-  "mark doing a task"
+  "mark take a break of doing a task"
   (todo--with-task id
 	  (append (car (task-doing-periods THE-TASK)) (current-time-string))))
 
