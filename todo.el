@@ -261,3 +261,14 @@ filter function的函数签名应该为(process &rest objs) "
   (unless status
 	(error tasks-or-error)))
 
+;; 以下操作是为了兼容#!emacs --script方式
+(when (member "-scriptload" command-line-args)
+  (todo "pull")
+  (catch EXIT
+	(let (command)
+	  (while t
+		(setq command (read-string ": "))
+		(if (string= (downcase command) "exit")
+			(throw EXIT t)
+		  (apply #'todo (split-string command))))))
+  (todo "push"))
