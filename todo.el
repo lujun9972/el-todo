@@ -93,10 +93,8 @@ filter function的函数签名应该为(process &rest objs) "
 	(unless done
 	  (setq tasks (todo--find-undone-tasks tasks)))
 	(when id
-	  (when (stringp id)
-		(setq id (intern id)))
 	  (setq tasks (remove-if-not (lambda (task)
-								   (eq id (task-id task)))
+								   (string-equal id (task-id task)))
 								 tasks)))
 	(when desc
 	  (setq tasks (remove-if-not (lambda (task)
@@ -216,7 +214,9 @@ filter function的函数签名应该为(process &rest objs) "
 
 (cl-defun todo--connect-to-server (server port)
   "make a process connect to the todo server"
-  (make-lispy-network-process :name "todo-client"
+  (unless (and todo-client--process
+			   (process-live-p todo-client--process))
+	(setq todo-client--process (make-lispy-network-process :name "todo-client"
 							  :host server
 							  :service port
 							  :filter (lambda (proc &rest objs)
@@ -225,17 +225,14 @@ filter function的函数签名应该为(process &rest objs) "
 											   (args (cdr objs)))
 										  (when (eq (process-get proc 'WAIT) cmd)
 											(process-put proc 'WAIT nil))
-										  (apply cmd-fn proc args)))))
+										  (apply cmd-fn proc args)))))))
 
 (cl-defun todo-pull (&optional (server todo-server) (port todo-port) user pwd)
   (let ((user (or user
 				  (read-string "please input the user name: " user-login-name)))
 		(pwd (md5 (or pwd
 					  (read-passwd "please input the password: ")))))
-	(unless (and todo-client--process
-				 (process-live-p todo-client--process))
-	  (setq todo-client--process
-			(todo--connect-to-server server port)))
+	(todo--connect-to-server server port)
 	(lispy-process-send-wait todo-client--process 'PULL-RESPONSE
 							 'PULL user pwd)))
 (cl-defun todo--PULL-RESPONSE (conn status tasks-or-error)
@@ -250,10 +247,7 @@ filter function的函数签名应该为(process &rest objs) "
 				  (read-string "please input the user name: " user-login-name)))
 		(pwd (md5 (or pwd
 					  (read-passwd "please input the password: ")))))
-	(unless (and todo-client--process
-				 (process-live-p todo-client--process))
-	  (setq todo-client--process
-			(todo--connect-to-server server port)))
+	(todo--connect-to-server server port)
 	(lispy-process-send-wait todo-client--process 'PUSH-RESPONSE
 							 'PUSH user pwd *todo-tasks*)))
 (cl-defun todo--PUSH-RESPONSE (conn status &optional tasks-or-error)
