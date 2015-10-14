@@ -1,6 +1,7 @@
 #!emacs --script
 (require 'cl)
 (require 'subr-x)
+(require 'lispy-process)
 
 (defun make-lispy-network-process (&rest args)
   "类似`make-network-process'但使用lisp object作为传输对象
@@ -217,15 +218,9 @@ filter function的函数签名应该为(process &rest objs) "
   (unless (and todo-client--process
 			   (process-live-p todo-client--process))
 	(setq todo-client--process (make-lispy-network-process :name "todo-client"
-							  :host server
-							  :service port
-							  :filter (lambda (proc &rest objs)
-										(let* ((cmd (car objs))
-											   (cmd-fn (intern (format "todo--%s" cmd)))
-											   (args (cdr objs)))
-										  (when (eq (process-get proc 'WAIT) cmd)
-											(process-put proc 'WAIT nil))
-										  (apply cmd-fn proc args)))))))
+                                                           :host server
+                                                           :service port
+                                                           :buffer "*todo-client*"))))
 
 (cl-defun todo-pull (&optional (server todo-server) (port todo-port) user pwd)
   (let ((user (or user
@@ -233,13 +228,11 @@ filter function的函数签名应该为(process &rest objs) "
 		(pwd (md5 (or pwd
 					  (read-passwd "please input the password: ")))))
 	(todo--connect-to-server server port)
-	(lispy-process-send-wait todo-client--process 'PULL-RESPONSE
-							 'PULL user pwd)))
-(cl-defun todo--PULL-RESPONSE (conn status tasks-or-error)
-  ""
-  (if status
-	  (setq *todo-tasks* tasks-or-error)
-	(error tasks-or-error)))
+	(lispy-process-send todo-client--process 'PULL user pwd)
+    (cl-multiple-value-bind (response status tasks-or-error) (read-from-lispy-process-wait todo-client--process)
+      (if status
+          (setq *todo-tasks* tasks-or-error)
+        (error tasks-or-error)))))
 
 ;; todo push server
 (cl-defun todo-push (&optional (server todo-server) (port todo-port) user pwd)
@@ -248,12 +241,11 @@ filter function的函数签名应该为(process &rest objs) "
 		(pwd (md5 (or pwd
 					  (read-passwd "please input the password: ")))))
 	(todo--connect-to-server server port)
-	(lispy-process-send-wait todo-client--process 'PUSH-RESPONSE
-							 'PUSH user pwd *todo-tasks*)))
-(cl-defun todo--PUSH-RESPONSE (conn status &optional tasks-or-error)
-  ""
-  (unless status
-	(error tasks-or-error)))
+	(lispy-process-send todo-client--process 'PUSH user pwd *todo-tasks*)
+    (cl-multiple-value-bind (response status tasks-or-erro
+                                    r) (read-from-lispy-process-wait todo-client--process)
+      (unless status
+        (error tasks-or-error)))))
 
 ;; 以下操作是为了兼容#!emacs --script方式
 (when (member "-scriptload" command-line-args)

@@ -6,7 +6,7 @@
 	(if (functionp cmd-fn)
 		(apply cmd-fn conn args)
 	  (message "unkown request")
-	  (lispy-process-send conn (intern (format "%s-RESPONSE" cmd) nil "known request cmd")))))
+	  (lispy-process-send conn (intern (format "%s-RESPONSE" cmd)) nil "known request cmd"))))
 
 (defun todo-server-start-server (&optional port)
   "start the todo server"
