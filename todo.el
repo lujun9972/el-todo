@@ -3,37 +3,6 @@
 (require 'subr-x)
 (require 'lispy-process)
 
-(defun make-lispy-network-process (&rest args)
-  "类似`make-network-process'但使用lisp object作为传输对象
-
-filter function的函数签名应该为(process &rest objs) "
-  (lexical-let* ((ori-filter-fn (or  (plist-get args :filter)
-									 #'lispy-process-default-filter))
-				 (store-msg-property (gensym)))
-	(plist-put args :filter
-			   (lambda (process msg)
-				 (let ((content (process-get process store-msg-property))
-					   result obj)
-				   (setq content (concat content msg))
-				   (while (setq result (ignore-errors (read-from-string content)))
-					 (setq content (substring content (cdr result)))
-					 (setq obj (car result))
-					 (apply ori-filter-fn process obj))
-				   (process-put process store-msg-property content))))
-	(apply #'make-network-process args)))
-
-(defun lispy-process-send (process &rest objs)
-  "类似`process-send-string' 但发送的是lisp object"
-  (process-send-string process (prin1-to-string objs)))
-
-(defun lispy-process-send-wait (process wait-flag &rest objs)
-  "类似`lispy-process-send' 但会等待回应
-其中会设置process的'WAIT属性为`wait-flag. 并等待回应函数将'WAIT属性清为nil"
-  (process-put process 'WAIT wait-flag)
-  (process-send-string process (prin1-to-string objs))
-  (while (process-get process 'WAIT)
-	(accept-process-output process 0.05)))
-
 (defgroup el-todo nil
   "a todo command line tool used in eshell")
 
