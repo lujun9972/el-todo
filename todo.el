@@ -1,6 +1,7 @@
 #!emacs --script
 (require 'cl)
 (require 'subr-x)
+(add-to-list 'load-path default-directory)
 (require 'lispy-process)
 
 (defgroup el-todo nil
@@ -219,11 +220,11 @@
 ;; 以下操作是为了兼容#!emacs --script方式
 (when (member "-scriptload" command-line-args)
   (todo "pull")
-  (catch EXIT
+  (catch 'EXIT
 	(let (command)
 	  (while t
 		(setq command (read-string ": "))
 		(if (string= (downcase command) "exit")
-			(throw EXIT t)
+			(throw 'EXIT t)
 		  (apply #'todo (split-string command))))))
   (todo "push"))

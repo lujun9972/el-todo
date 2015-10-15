@@ -36,9 +36,12 @@
 (defun todo-server-PULL (conn user pwd)
   "send user's task data back to requester after verified the user "
   (if (todo-server--verify user pwd)
-	  (with-temp-buffer
-		(insert-file-contents (todo-server--user-save-file user))
-		(lispy-process-send conn 'PULL-RESPONSE t (read-from-whole-string (buffer-string))))
+	  (let ((save-file (todo-server--user-save-file user)))
+		(if (file-exists-p save-file)
+			(with-temp-buffer
+			  (insert-file-contents save-file)
+			  (lispy-process-send conn 'PULL-RESPONSE t (read-from-whole-string (buffer-string))))
+		  (lispy-process-send conn 'PULL-RESPONSE t nil)))
 	(lispy-process-send conn 'PULL-RESPONSE nil "unmatched user and password")))
 
 (defun todo-server-PUSH (conn user pwd tasks)

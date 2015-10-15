@@ -103,7 +103,7 @@ filter function的函数签名应该为(process &rest objs) "
   "从lisp process buffer中读取lisp object. 若成功则返回object,并将读取的内容从process buffer中移除,否则阻塞一直到成功为止"
   (let (obj)
 	(while (and (not (eq 'closed (process-status process)))
-               (equal "(end-of-file)" (setq obj (read-from-lispy-process process))))
+               (stringp (setq obj (read-from-lispy-process process))))
 	  (accept-process-output process 0.1))
     (if (listp obj)
         obj
