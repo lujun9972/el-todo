@@ -1,6 +1,7 @@
 #!emacs --script
 (require 'cl)
 (require 'subr-x)
+(require 'org)
 (add-to-list 'load-path default-directory)
 (require 'lispy-process)
 
@@ -129,14 +130,14 @@
 	  (setf (task-pri THE-TASK) pri)))
 
 ;; todo sd task-id 
-(cl-defun todo-sd (task-id)
+(cl-defun todo-sd (id)
   "set/change task's schedule date"
   (todo--with-task id
 	  (setf (task-schedule-time THE-TASK) (org-read-date))))
 
 ;; todo dl task-id 
-(cl-defun todo-dl (task-id)
-  "set/change task's schedule date"
+(cl-defun todo-dl (id)
+  "set/change task's deadline date"
   (todo--with-task id
 	  (setf (task-deadline-time THE-TASK) (org-read-date))))
 
